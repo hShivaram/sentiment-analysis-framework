@@ -5,7 +5,8 @@ A robust framework for sentiment analysis using Hugging Face's Transformers libr
 ## Features
 
 - 🚀 Fast and accurate sentiment analysis using pre-trained models
-- 🧪 Comprehensive test suite with both unit and integration tests
+- 🧪 Comprehensive test suite with unit, integration, and model validation tests
+- 🔍 DeepChecks integration for model monitoring and validation
 - 🔄 CI/CD pipeline with GitHub Actions
 - 📊 Code coverage reporting
 - 🔍 Detailed logging and error handling
@@ -20,7 +21,8 @@ sentiment-analysis-framework/
 │   └── sentiment_model.py  # Main sentiment analysis model
 ├── tests/                # Test files
 │   ├── test_sentiment_model.py       # Unit tests with mocks
-│   └── test_sentiment_model_deepeval.py  # Integration tests
+│   ├── test_sentiment_model_deepeval.py  # Integration tests
+│   └── test_model_with_deepchecks.py # Model validation tests
 ├── .gitignore           # Git ignore file
 └── requirements.txt     # Project dependencies
 ```
@@ -68,27 +70,47 @@ print(f"Sentiment: {result['label']}, Confidence: {result['score']:.2f}")
 
 ### Running Tests
 
-Run unit tests (fast):
+### Quick Start
+
+Run all tests:
 ```bash
-pytest tests/test_sentiment_model.py -v
+pytest
 ```
 
-Run integration tests (comprehensive):
-```bash
-pytest tests/test_sentiment_model_deepeval.py -v
-```
+### Test Types
 
-Run all tests with coverage:
+1. **Unit Tests** (Fast, basic functionality):
+   ```bash
+   pytest tests/test_sentiment_model.py -v
+   ```
+
+2. **Integration Tests** (Comprehensive, with real dependencies):
+   ```bash
+   pytest tests/test_sentiment_model_deepeval.py -v
+   ```
+
+3. **Model Validation** (Data quality and model health):
+   ```bash
+   pytest tests/test_model_with_deepchecks.py -v
+   ```
+
+### Coverage Report
+
 ```bash
 pytest --cov=src --cov-report=term-missing
 ```
+
+For detailed information about the different test types and when to use them, see [TESTING.md](TESTING.md).
 
 ## CI/CD Pipeline
 
 The project includes a GitHub Actions workflow that runs:
 - Unit tests on every push and pull request
 - Integration tests on a daily schedule
+- Model validation tests in production
 - Code coverage reporting
+
+See [TESTING.md](TESTING.md) for detailed information about the test types and when they run.
 
 ## License
 

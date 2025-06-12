@@ -17,7 +17,9 @@ setup(
             'pytest-mock>=3.10.0',
             'pytest-xdist>=3.0.0',
             'codecov>=2.1.0',
+            'numpy<2.0.0',  # Required for deepchecks compatibility
             'deep-eval>=0.14.0;python_version<"3.12"',  # Deep-eval doesn't support Python 3.12 yet
+            'deepchecks>=0.19.1',  # For ML model validation and testing
         ],
     },
     python_requires='>=3.8',
