@@ -14,19 +14,22 @@ on:
 env:
   TRANSFORMERS_CACHE: ${{ github.workspace }}/.cache/huggingface/hub
   HF_HOME: ${{ github.workspace }}/.cache/huggingface
+  PYTHON_VERSION: '3.12'
 
 jobs:
   unit-tests:
     name: Run Unit Tests
     runs-on: ubuntu-latest
-    
+    outputs:
+      coverage-file: ${{ steps.coverage.outputs.file }}
+
     steps:
     - uses: actions/checkout@v3
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install dependencies
       run: |
@@ -34,8 +37,10 @@ jobs:
         pip install -e '.[test]'  # Install package with test extras
     
     - name: Run unit tests
+      id: coverage
       run: |
         pytest tests/test_sentiment_model.py -v --cov=src --cov-report=xml
+        echo "file=coverage.xml" >> $GITHUB_OUTPUT
     
     - name: Upload coverage
       uses: codecov/codecov-action@v3
@@ -46,13 +51,15 @@ jobs:
   integration-tests:
     name: Run Integration Tests
     runs-on: ubuntu-latest
+    needs: unit-tests
     
     # Run integration tests on schedule, release, workflow_dispatch, or when labeled
     if: >
-      github.event_name == 'schedule' ||
+      (github.event_name == 'schedule' ||
       github.event_name == 'release' ||
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'run-integration-tests')
+      contains(github.event.pull_request.labels.*.name, 'run-integration-tests')) &&
+      needs.unit-tests.result == 'success'
     
     steps:
     - uses: actions/checkout@v3
@@ -96,13 +103,15 @@ jobs:
   model-validation-tests:
     name: Run Model Validation Tests
     runs-on: ubuntu-latest
+    needs: integration-tests
     
     # Run on schedule, release, workflow_dispatch, or when labeled
-    if: true #>
-      #github.event_name == 'schedule' ||
-      #github.event_name == 'release' ||
-      #github.event_name == 'workflow_dispatch' ||
-      #contains(github.event.pull_request.labels.*.name, 'run-model-validation')
+    if: >
+      (github.event_name == 'schedule' ||
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'run-model-validation')) &&
+      needs.integration-tests.result == 'success'
     
     steps:
     - uses: actions/checkout@v3
@@ -132,17 +141,26 @@ jobs:
       env:
         HUGGINGFACE_HUB_CACHE: ${{ env.TRANSFORMERS_CACHE }}
 
-  # This job runs after all test jobs complete
+  # This job runs after any test job completes
   report-coverage:
     name: Report Coverage
-    needs: [unit-tests, integration-tests, model-validation-tests]
+    needs: 
+      - unit-tests
+      - integration-tests
+      - model-validation-tests
     runs-on: ubuntu-latest
-    if: always()
+    # Run if any test job was attempted (success or failure)
+    if: >
+      always() && 
+      (
+        (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'failure') ||
+        (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'failure') ||
+        (needs.model-validation-tests.result == 'success' || needs.model-validation-tests.result == 'failure')
+      )
     
     steps:
     - name: Upload coverage report
       uses: codecov/codecov-action@v3
-      if: success() || failure()  # Always run this step
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
