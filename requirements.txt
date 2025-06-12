@@ -1,0 +1,27 @@
+# Core Dependencies
+numpy>=1.26.4
+torch>=2.2.0
+transformers>=4.36.0
+
+# Testing
+pytest>=8.1.1
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0  # For parallel test execution
+
+# Development
+black>=24.3.0
+isort>=5.13.2
+flake8>=7.0.0
+mypy>=1.8.0
+pre-commit>=3.5.0
+
+# Documentation
+sphinx>=7.2.6
+sphinx-rtd-theme>=2.0.0
+
+# CI/CD
+codecov>=2.1.13
+
+# Optional: For running integration tests
+deep-eval>=0.14.0  # For advanced model evaluation metrics

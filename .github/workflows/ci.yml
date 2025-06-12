@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run integration tests daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+# Cache for model weights to speed up integration tests
+env:
+  TRANSFORMERS_CACHE: ${{ github.workspace }}/.cache/huggingface/hub
+  HF_HOME: ${{ github.workspace }}/.cache/huggingface
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[test]
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/test_sentiment_model.py -v --cov=src --cov-report=xml
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    
+    # Only run integration tests on schedule, release, or workflow_dispatch
+    if: >
+      github.event_name == 'schedule' || 
+      github.event_name == 'release' || 
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'run-integration-tests')
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Cache model weights
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.HF_HOME }}
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[test]
+    
+    - name: Run integration tests
+      run: |
+        pytest tests/test_sentiment_model_deepeval.py -v --cov=src --cov-append --cov-report=xml
+      env:
+        # Increase timeout for model downloads
+        HUGGINGFACE_HUB_CACHE: ${{ env.TRANSFORMERS_CACHE }}
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  # This job runs after both unit and integration tests complete
+  report-coverage:
+    name: Report Coverage
+    needs: [unit-tests, integration-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      if: success() || failure()  # Always run this step
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
