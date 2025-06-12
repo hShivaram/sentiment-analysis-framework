@@ -31,8 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .[test]  # Install package in development mode with test extras
+        pip install -e '.[test]'  # Install package with test extras
     
     - name: Run unit tests
       run: |
@@ -61,7 +60,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.11'  # Use Python 3.11 for integration tests due to deep-eval compatibility
     
     - name: Cache model weights
       uses: actions/cache@v3
@@ -74,8 +73,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .[test]  # Install package in development mode with test extras
+        pip install -e '.[test]'  # Install package with test extras
     
     - name: Run integration tests
       run: |

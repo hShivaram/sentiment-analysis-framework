@@ -22,6 +22,3 @@ sphinx-rtd-theme>=2.0.0
 
 # CI/CD
 codecov>=2.1.13
-
-# Optional: For running integration tests
-deep-eval>=0.14.0  # For advanced model evaluation metrics
