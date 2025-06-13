@@ -39,7 +39,7 @@ jobs:
     - name: Run unit tests
       id: coverage
       run: |
-        pytest tests/test_sentiment_model.py -v --cov=src --cov-report=xml
+        pytest tests/test_sentiment_model.py tests/test_sentiment_edge_cases.py -v --cov=src --cov-report=xml
         echo "file=coverage.xml" >> $GITHUB_OUTPUT
     
     - name: Upload coverage

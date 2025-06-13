@@ -20,6 +20,7 @@ setup(
             'numpy<2.0.0',  # Required for deepchecks compatibility
             'deep-eval>=0.14.0;python_version<"3.12"',  # Deep-eval doesn't support Python 3.12 yet
             'deepchecks>=0.19.1',  # For ML model validation and testing
+            'hypothesis>=6.0.0',  # For property-based testing
         ],
     },
     python_requires='>=3.8',
